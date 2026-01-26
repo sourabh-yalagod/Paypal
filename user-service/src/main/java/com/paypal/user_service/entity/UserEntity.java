@@ -1,5 +1,6 @@
 package com.paypal.user_service.entity;
 
+import com.paypal.user_service.lib.RoleEnum;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.apachecommons.CommonsLog;
@@ -21,6 +22,9 @@ public class UserEntity {
 
     @Column(unique = true)
     private String username;
+
+    @Enumerated(EnumType.STRING)
+    private RoleEnum role = RoleEnum.USER;
 
     private String password;
 }

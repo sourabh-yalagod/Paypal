@@ -4,6 +4,7 @@ import com.paypal.user_service.dto.auth.SignInDto;
 import com.paypal.user_service.dto.auth.SignUpDto;
 import com.paypal.user_service.entity.UserEntity;
 import com.paypal.user_service.lib.CustomResponse;
+import com.paypal.user_service.lib.RoleEnum;
 import com.paypal.user_service.repository.UserRepository;
 import com.paypal.user_service.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class UserAuthServiceImpl implements UserAuth {
 
     @Override
     public CustomResponse signUp(SignUpDto payload) {
-
+        String role = payload.getRole() == null ? RoleEnum.USER.toString() : payload.getRole();
         // check email
         if (userRepository.getUserByEmail(payload.getEmail()).isPresent()) {
             return CustomResponse.builder()
@@ -49,6 +50,7 @@ public class UserAuthServiceImpl implements UserAuth {
                 .email(payload.getEmail())
                 .username(payload.getUsername())
                 .password(payload.getPassword())
+                .role(RoleEnum.valueOf(role))
                 .build();
 
         user = userRepository.save(user);

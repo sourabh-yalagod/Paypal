@@ -20,6 +20,7 @@ public class JwtUtils {
                 .setSubject(user.getUsername())
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
+                .claim("role", user.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
@@ -41,6 +42,12 @@ public class JwtUtils {
         return getClaims(token).get("userId", String.class);
     }
 
+    public static String getUserEmail(String token) {
+        return getClaims(token).get("email", String.class);
+    }
+    public static String getUserRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
     public static boolean isTokenExpired(String token) {
         return getClaims(token).getExpiration().before(new Date());
     }
