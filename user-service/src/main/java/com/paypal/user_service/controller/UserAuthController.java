@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserAuthController {
     private final UserAuth userAuth;
 
-    @PostMapping("/api/signup")
+    @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody SignUpDto payload) {
         CustomResponse response = userAuth.signUp(payload);
-        return ResponseEntity.status(response.getStatus()).body(response.getMessage());
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping("/api/signin")
+    @PostMapping("/signin")
     public ResponseEntity<?> signIn(@RequestBody SignInDto payload) {
         CustomResponse response = userAuth.signIn(payload);
         return ResponseEntity.status(response.getStatus()).body(response);

@@ -4,10 +4,15 @@ import com.paypal.user_service.entity.UserEntity;
 import io.jsonwebtoken.*;
 
 import java.util.Date;
+import io.jsonwebtoken.security.Keys;
+
+import javax.crypto.SecretKey;
 
 public class JwtUtils {
 
-    private static final String SECRET_KEY = "secret_key";
+    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
+            "this_is_a_very_secure_secret_key_256bit".getBytes()
+    );;
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 1 Day
 
     public static String generateToken(UserEntity user) {
@@ -17,7 +22,7 @@ public class JwtUtils {
                 .claim("email", user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
 

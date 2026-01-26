@@ -29,7 +29,7 @@ public class UserAuthServiceImpl implements UserAuth {
         if (userRepository.getUserByEmail(payload.getEmail()).isPresent()) {
             return CustomResponse.builder()
                     .status(HttpStatus.BAD_REQUEST.value())
-                    .message("Email already exists")
+                    .message("User already exists with This Email...!")
                     .isSuccess(false)
                     .build();
         }
@@ -38,7 +38,7 @@ public class UserAuthServiceImpl implements UserAuth {
         if (userRepository.getUserByUsername(payload.getUsername()).isPresent()) {
             return CustomResponse.builder()
                     .status(HttpStatus.BAD_REQUEST.value())
-                    .message("Username already exists")
+                    .message("Username already Taken Please try with different Username...!")
                     .isSuccess(false)
                     .build();
         }
@@ -53,11 +53,8 @@ public class UserAuthServiceImpl implements UserAuth {
 
         user = userRepository.save(user);
 
-        String token = JwtUtils.generateToken(user);
-
         Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("user", user);
+        data.put("userId", user.getId());
 
         return CustomResponse.builder()
                 .status(HttpStatus.CREATED.value())
@@ -72,11 +69,10 @@ public class UserAuthServiceImpl implements UserAuth {
 
         Optional<UserEntity> userOpt =
                 userRepository.getUserByEmail(payload.getEmail());
-
         if (userOpt.isEmpty()) {
             return CustomResponse.builder()
                     .status(HttpStatus.UNAUTHORIZED.value())
-                    .message("Invalid email or password")
+                    .message("Email not found....!")
                     .isSuccess(false)
                     .build();
         }
@@ -86,7 +82,7 @@ public class UserAuthServiceImpl implements UserAuth {
         if (!passwordEncoder.matches(payload.getPassword(), user.getPassword())) {
             return CustomResponse.builder()
                     .status(HttpStatus.UNAUTHORIZED.value())
-                    .message("Invalid email or password")
+                    .message("Invalid password....!")
                     .isSuccess(false)
                     .build();
         }
