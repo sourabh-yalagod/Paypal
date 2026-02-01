@@ -25,36 +25,13 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public CustomResponse pay(PaymentRequestDto payload) {
         Optional<TransactionEntity> sender = transactionRepository.findUserById(payload.getSenderId());
-//        if (sender.isEmpty()) {
-//            return CustomResponse.builder()
-//                    .message("Sender not found....!")
-//                    .data(null)
-//                    .statusCode(402)
-//                    .build();
-//        }
-        Optional<TransactionEntity> receiver = transactionRepository.findUserById(payload.getSenderId());
-//        if (receiver.isEmpty()) {
-//            return CustomResponse.builder()
-//                    .message("Receiver not found....!")
-//                    .data(null)
-//                    .statusCode(402)
-//                    .build();
-//        }
         TransactionEntity transactionPayload = TransactionEntity.builder()
                 .amount(payload.getAmount())
                 .receiverId(payload.getReceiverId())
                 .senderId(payload.getSenderId())
                 .build();
-        try {
-            TransactionEntity newTransaction = transactionRepository.save(transactionPayload);
-            String jsonTransaction = objectMapper.writeValueAsString(newTransaction);
-            kafkaEvents.publishEvent(newTransaction.getId(), jsonTransaction);
-        } catch (JsonProcessingException e) {
-            return CustomResponse.builder()
-                    .message("Transaction failed...!")
-                    .statusCode(HttpStatus.FAILED_DEPENDENCY.value())
-                    .build();
-        }
+        TransactionEntity newTransaction = transactionRepository.save(transactionPayload);
+        kafkaEvents.publishEvent(newTransaction.getId(), newTransaction);
         return CustomResponse.builder()
                 .message("Transaction created")
                 .isSuccess(true)

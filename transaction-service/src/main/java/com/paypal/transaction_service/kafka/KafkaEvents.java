@@ -1,6 +1,7 @@
 package com.paypal.transaction_service.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paypal.transaction_service.entity.TransactionEntity;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -13,22 +14,20 @@ import java.util.concurrent.CompletableFuture;
 @Component
 @RequiredArgsConstructor
 public class KafkaEvents {
-    private static final String TOPIC = "transaction-topic";
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private static final String TOPIC = "transaction-events";
+    private final KafkaTemplate<String, TransactionEntity> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    public boolean publishEvent(String key, String event) {
-        CompletableFuture<SendResult<String, String>> futureEvent = kafkaTemplate.send(TOPIC, key, event);
+    public void publishEvent(String key, TransactionEntity event) {
+        CompletableFuture<SendResult<String, TransactionEntity>> futureEvent = kafkaTemplate.send(TOPIC, key, event);
         futureEvent.thenAccept(response -> {
             RecordMetadata metadata = response.getRecordMetadata();
-            ProducerRecord<String, String> record = response.getProducerRecord();
-            System.out.println("Event Published Response : " + metadata.topic());
-            System.out.println("Event Published Record : " + record.toString());
+            ProducerRecord<String, TransactionEntity> record = response.getProducerRecord();
+            System.out.println("Kafka message sent successfully! Topic: " + metadata.topic() + ", Partition: " + metadata.partition() + ", Offset: " + metadata.offset());
         }).exceptionally(error -> {
             System.out.println("Event Published Error : " + error.getMessage());
             return null;
         });
-        return true;
     }
 
 }
