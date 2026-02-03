@@ -1,7 +1,7 @@
 package com.paypal.user_service.config;
 
 
-import com.paypal.user_service.lib.AccessDeniedHandler;
+import com.paypal.user_service.lib.CustomAccessDeniedHandler;
 import com.paypal.user_service.lib.JwtAuthEntryPoint;
 import com.paypal.user_service.lib.RoleEnum;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final AccessDeniedHandler accessDeniedHandler;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
