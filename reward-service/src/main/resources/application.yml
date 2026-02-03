@@ -3,15 +3,18 @@ server:
 
 spring:
   application:
-    name:reward-service
+    name: reward-service
+
   datasource:
     url: jdbc:h2:mem:rewarddb
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
   h2:
     console:
       enabled: true
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,11 +22,12 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
 
   kafka:
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: reward-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.paypal.notification_service.entity"
-        spring.json.value.default.type: com.paypal.notification_service.entity.TransactionEntity
+        spring.json.trusted.packages: com.paypal.reward_service.entity
+        spring.json.value.default.type: com.paypal.reward_service.entity.TransactionEntity
