@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class NotificationServiceApplication implements CommandLineRunner {
-    @Value("${server.port}")
     private int port;
 	public static void main(String[] args) {
 		SpringApplication.run(NotificationServiceApplication.class, args);
