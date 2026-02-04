@@ -16,7 +16,7 @@ public class WalletHoldEntity {
     private String id;
 
     @Column(nullable = false)
-    private Long amount;
+    private Double amount;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
