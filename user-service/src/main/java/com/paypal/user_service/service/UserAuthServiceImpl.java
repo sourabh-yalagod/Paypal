@@ -28,20 +28,12 @@ public class UserAuthServiceImpl implements UserAuth {
         String role = payload.getRole() == null ? RoleEnum.USER.toString() : payload.getRole();
         // check email
         if (userRepository.getUserByEmail(payload.getEmail()).isPresent()) {
-            return CustomResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST.value())
-                    .message("User already exists with This Email...!")
-                    .isSuccess(false)
-                    .build();
+            throw new RuntimeException("User already exists with This Email...!");
         }
 
         // check username
         if (userRepository.getUserByUsername(payload.getUsername()).isPresent()) {
-            return CustomResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST.value())
-                    .message("Username already Taken Please try with different Username...!")
-                    .isSuccess(false)
-                    .build();
+            throw new RuntimeException("Username already Taken Please try with different Username...!");
         }
 
         payload.setPassword(passwordEncoder.encode(payload.getPassword()));
@@ -72,21 +64,13 @@ public class UserAuthServiceImpl implements UserAuth {
         Optional<UserEntity> userOpt =
                 userRepository.getUserByEmail(payload.getEmail());
         if (userOpt.isEmpty()) {
-            return CustomResponse.builder()
-                    .status(HttpStatus.UNAUTHORIZED.value())
-                    .message("Email not found....!")
-                    .isSuccess(false)
-                    .build();
+            throw new RuntimeException("Email not found....!");
         }
 
         UserEntity user = userOpt.get();
 
         if (!passwordEncoder.matches(payload.getPassword(), user.getPassword())) {
-            return CustomResponse.builder()
-                    .status(HttpStatus.UNAUTHORIZED.value())
-                    .message("Invalid password....!")
-                    .isSuccess(false)
-                    .build();
+            throw new RuntimeException("Invalid password....!");
         }
 
         String token = JwtUtils.generateToken(user);

@@ -1,4 +1,4 @@
-package com.paypal.wallet_service.dto;
+package com.paypal.user_service.dto.apis;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DebitRequestDto {
+public class CreateWalletRequestDto {
     private String userId;
-    private BigDecimal amount;
+    private String currency;
+    private BigDecimal balance;
 }

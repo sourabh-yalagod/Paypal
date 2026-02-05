@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 
@@ -21,7 +22,7 @@ public class RewardEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private Double points;
+    private BigDecimal points;
     private String userId;
     private String transactionId;
     @CreatedDate

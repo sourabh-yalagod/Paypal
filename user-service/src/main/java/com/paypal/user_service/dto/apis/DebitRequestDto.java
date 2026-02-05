@@ -1,4 +1,4 @@
-package com.paypal.wallet_service.dto;
+package com.paypal.user_service.dto.apis;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

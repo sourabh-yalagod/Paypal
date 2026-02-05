@@ -26,6 +26,8 @@ public class TransactionEntity {
     @Column(nullable = false)
     private String receiverId;
 
+    private String walletHoldId;
+
     @Column(nullable = false)
     private BigInteger amount;
 
