@@ -16,7 +16,6 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaEvents {
     private static final String TOPIC = "transaction-events";
     private final KafkaTemplate<String, TransactionEntity> kafkaTemplate;
-    private final ObjectMapper objectMapper;
 
     public void publishEvent(String key, TransactionEntity event) {
         CompletableFuture<SendResult<String, TransactionEntity>> futureEvent = kafkaTemplate.send(TOPIC, key, event);

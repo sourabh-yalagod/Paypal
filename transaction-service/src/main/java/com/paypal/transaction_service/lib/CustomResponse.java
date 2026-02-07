@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class CustomResponse {
     private String message;
     private Object data;
-    private int statusCode;
+    private int status;
     private boolean isSuccess;
 }
