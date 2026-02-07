@@ -1,5 +1,6 @@
 package com.paypal.wallet_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 @Getter
 @Setter
+@ToString(exclude = "walletHolds")
 public class WalletEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -40,28 +42,29 @@ public class WalletEntity {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @JsonIgnore
     private List<WalletHoldEntity> walletHolds = new ArrayList<>();
 
 
     // Business Logic
     public void credit(BigDecimal amount) {
-        balance = balance.add(amount);
+        this.balance = balance.add(amount);
         availableBalance = availableBalance.add(amount);
     }
 
     public void debit(BigDecimal amount) {
-        balance = balance.subtract(amount);
+        this.balance = balance.subtract(amount);
     }
 
     public void reduceAvailable(BigDecimal amount) {
-        availableBalance = availableBalance.subtract(amount);
+        this.availableBalance = availableBalance.subtract(amount);
     }
 
     public void increaseAvailable(BigDecimal amount) {
-        availableBalance = availableBalance.add(amount);
+        this.availableBalance = availableBalance.add(amount);
     }
 
     public boolean hasSufficientBalance(BigDecimal amount) {
-        return availableBalance.compareTo(amount) >= 0;
+        return this.availableBalance.compareTo(amount) >= 0;
     }
 }

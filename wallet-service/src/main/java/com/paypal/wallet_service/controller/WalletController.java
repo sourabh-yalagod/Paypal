@@ -3,6 +3,7 @@ package com.paypal.wallet_service.controller;
 import com.paypal.wallet_service.dto.CreateWalletRequestDto;
 import com.paypal.wallet_service.dto.CreditRequestDto;
 import com.paypal.wallet_service.dto.DebitRequestDto;
+import com.paypal.wallet_service.entity.TransactionEntity;
 import com.paypal.wallet_service.lib.CustomResponse;
 import com.paypal.wallet_service.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class WalletController {
     }
 
     @PostMapping("/debit-wallet")
-    public ResponseEntity<?> debitWallet(@RequestBody DebitRequestDto payload) {
+    public ResponseEntity<?> debitWallet(@RequestBody TransactionEntity payload) {
         CustomResponse response = walletService.placeHold(payload);
         if (response.getIsSuccess()) {
             return ResponseEntity.status(response.getStatus()).body(response);

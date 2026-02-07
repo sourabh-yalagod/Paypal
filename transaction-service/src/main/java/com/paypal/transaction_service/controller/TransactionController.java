@@ -18,7 +18,7 @@ public class TransactionController {
 
     @PostMapping("/create")
     public ResponseEntity<CustomResponse> createTransaction(@RequestBody PaymentRequestDto payload) {
-        CustomResponse reponse = paymentService.pay(payload);
-        return ResponseEntity.status(reponse.getStatusCode()).body(reponse);
+        CustomResponse response = paymentService.pay(payload);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 }

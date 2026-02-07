@@ -30,6 +30,7 @@ public class WalletHoldEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wallet_id")
+    @JsonIgnore
     private WalletEntity wallet;
 
     public void capture() {

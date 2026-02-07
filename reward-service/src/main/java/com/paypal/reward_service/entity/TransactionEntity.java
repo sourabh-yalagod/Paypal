@@ -1,10 +1,12 @@
 package com.paypal.reward_service.entity;
 
+import com.paypal.reward_service.lib.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 
@@ -26,14 +28,16 @@ public class TransactionEntity {
     @Column(nullable = false)
     private String receiverId;
 
-    private String walletHoldId;
+    private String walletId;
 
-    @Column(nullable = false)
-    private BigInteger amount;
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
+
+    private BigDecimal amount = BigDecimal.ZERO;
 
     @CreatedDate
     @Column(updatable = false)
-    private LocalDateTime createAt;
+    private LocalDateTime createAt = LocalDateTime.now();
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;

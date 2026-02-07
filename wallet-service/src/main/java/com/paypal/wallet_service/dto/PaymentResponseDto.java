@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PaymentResponseDto {
     private String holdId;
+    private String transactionId;
+    private Boolean isSuccess;
 }

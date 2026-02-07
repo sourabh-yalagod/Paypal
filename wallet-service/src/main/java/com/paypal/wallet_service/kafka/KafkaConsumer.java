@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -35,6 +36,12 @@ public class KafkaConsumer {
         ConcurrentKafkaListenerContainerFactory<String, TransactionEntity> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
+    }
 
+    @KafkaListener(topics = "transaction-events", groupId = "notification-group")
+    private void consume(TransactionEntity transaction) {
+        System.out.println("Id : "+transaction.getId());
+        System.out.println("Sender : "+transaction.getSenderId());
+        System.out.println("Receiver : "+transaction.getReceiverId());
     }
 }

@@ -2,22 +2,21 @@ package com.paypal.wallet_service.service;
 
 import com.paypal.wallet_service.dto.CreateWalletRequestDto;
 import com.paypal.wallet_service.dto.CreditRequestDto;
-import com.paypal.wallet_service.dto.DebitRequestDto;
+import com.paypal.wallet_service.dto.PaymentResponseDto;
+import com.paypal.wallet_service.entity.TransactionEntity;
 import com.paypal.wallet_service.entity.WalletEntity;
 import com.paypal.wallet_service.entity.WalletHoldEntity;
 import com.paypal.wallet_service.kafka.KafkaProducer;
 import com.paypal.wallet_service.lib.CustomResponse;
 import com.paypal.wallet_service.lib.HoldStatus;
+import com.paypal.wallet_service.repository.TransactionRepository;
 import com.paypal.wallet_service.repository.WalletHoldRepository;
 import com.paypal.wallet_service.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +26,7 @@ import java.util.UUID;
 public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final WalletHoldRepository walletHoldRepository;
+    private final TransactionRepository transactionRepository;
     private final KafkaProducer kafkaProducer;
 
     @Transactional
@@ -41,6 +41,8 @@ public class WalletServiceImpl implements WalletService {
                     .balance(payload.getBalance())
                     .userId(payload.getUserId())
                     .walletHolds(new ArrayList<>())
+                    .availableBalance(payload.getBalance())
+                    .currency(payload.getCurrency())
                     .build();
             WalletEntity record = this.walletRepository.save(walletPayload);
             return CustomResponse
@@ -75,12 +77,10 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public CustomResponse placeHold(DebitRequestDto payload) {
-
+    public CustomResponse placeHold(TransactionEntity payload) {
         WalletEntity wallet = walletRepository
-                .findWalletByUserId(payload.getUserId())
+                .findWalletByUserId(payload.getSenderId())
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
-
         if (!wallet.hasSufficientBalance(payload.getAmount()))
             throw new RuntimeException("Insufficient balance");
 
@@ -95,18 +95,9 @@ public class WalletServiceImpl implements WalletService {
 
         walletHoldRepository.save(hold);
 
-        /* Publish Kafka AFTER COMMIT */
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        kafkaProducer.publishEvent(
-                                "hold-request-verification-events",
-                                hold
-                        );
-                    }
-                });
 
+//        kafkaProducer.publishEvent("hold-request-verification-events",hold);
+        System.out.println(wallet.toString());
         return CustomResponse.builder()
                 .isSuccess(true)
                 .status(200)
@@ -116,33 +107,45 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Transactional
-    public CustomResponse captureHold(String holdReference) {
+    @Override
+    public CustomResponse captureHold(PaymentResponseDto payload) {
 
         WalletHoldEntity hold = walletHoldRepository
-                .findByHoldReference(holdReference)
+                .findById(payload.getHoldId())
                 .orElseThrow(() -> new RuntimeException("Hold not found"));
-
+        TransactionEntity transaction = transactionRepository
+                .findById(payload.getTransactionId())
+                .orElseThrow(() -> new RuntimeException("Transaction not found....!"));
         if (hold.getStatus() != HoldStatus.ACTIVE)
             throw new IllegalStateException("Hold not active");
 
-        WalletEntity wallet = hold.getWallet();
+        WalletEntity senderWallet = hold.getWallet();
 
-        wallet.debit(hold.getAmount());
+        WalletEntity receiverWallet = walletRepository
+                .findWalletByUserId(transaction.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("Receiver wallet not found...!"));
+
+        receiverWallet.credit(hold.getAmount());
+        senderWallet.debit(hold.getAmount());
         hold.capture();
+
+        walletRepository.save(senderWallet);
+        walletHoldRepository.save(hold);
 
         return CustomResponse.builder()
                 .isSuccess(true)
                 .status(200)
                 .message("Transaction successful")
-                .data(wallet)
+                .data(transaction)
                 .build();
     }
 
     @Transactional
-    public CustomResponse releaseHold(String holdReference) {
+    @Override
+    public CustomResponse releaseHold(PaymentResponseDto payload) {
 
         WalletHoldEntity hold = walletHoldRepository
-                .findByHoldReference(holdReference)
+                .findById(payload.getHoldId())
                 .orElseThrow(() -> new RuntimeException("Hold not found"));
 
         if (hold.getStatus() != HoldStatus.ACTIVE)
@@ -154,7 +157,7 @@ public class WalletServiceImpl implements WalletService {
         wallet.increaseAvailable(hold.getAmount());
 
         hold.release();
-
+        System.out.println(wallet.toString());
         return CustomResponse.builder()
                 .isSuccess(true)
                 .status(200)
