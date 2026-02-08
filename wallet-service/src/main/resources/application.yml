@@ -4,21 +4,39 @@ spring:
   application:
     name: wallet-service
 
+  datasource:
+    url: jdbc:postgresql://ep-lucky-sky-ai3oyt5y-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    username: neondb_owner
+    password: npg_UxqOK3HdA1vL
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
   kafka:
+
     bootstrap-servers: localhost:9092
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
     template:
       default-topic: transaction-events
 
-  datasource:
-    url: jdbc:h2:mem:walletdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: wallet-group
 
-    jpa:
-      hibernate:
-        ddl-auto: update
-      show-sql: true
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+
+        spring.json.trusted.packages: "*"

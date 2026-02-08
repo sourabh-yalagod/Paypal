@@ -19,16 +19,11 @@ public class PaymentConfirmationController {
     @PostMapping("/confirm")
     public ResponseEntity<?> updatePaymentStatus(@RequestBody PaymentResponseDto payload) {
         try {
-            if (payload.getIsSuccess()) {
-                CustomResponse response = walletService.captureHold(payload);
-                return ResponseEntity.ok(response);
-            } else {
-                CustomResponse response = walletService.releaseHold(payload);
-                return ResponseEntity.ok(response);
-            }
+            CustomResponse response = walletService.captureHold(payload);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            System.out.println(e.toString());
-            throw new RuntimeException(e.getMessage());
+            CustomResponse response = walletService.releaseHold(payload);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

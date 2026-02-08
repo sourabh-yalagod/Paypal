@@ -9,6 +9,8 @@ import com.paypal.wallet_service.entity.WalletHoldEntity;
 import com.paypal.wallet_service.kafka.KafkaProducer;
 import com.paypal.wallet_service.lib.CustomResponse;
 import com.paypal.wallet_service.lib.HoldStatus;
+import com.paypal.wallet_service.lib.KafkaTopics;
+import com.paypal.wallet_service.lib.TransactionStatus;
 import com.paypal.wallet_service.repository.TransactionRepository;
 import com.paypal.wallet_service.repository.WalletHoldRepository;
 import com.paypal.wallet_service.repository.WalletRepository;
@@ -78,25 +80,27 @@ public class WalletServiceImpl implements WalletService {
     @Transactional
     @Override
     public CustomResponse placeHold(TransactionEntity payload) {
+        System.out.println("PlaceHoler : " + payload.getId());
         WalletEntity wallet = walletRepository
                 .findWalletByUserId(payload.getSenderId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new RuntimeException("Sender Wallet not found"));
         if (!wallet.hasSufficientBalance(payload.getAmount()))
             throw new RuntimeException("Insufficient balance");
 
         wallet.reduceAvailable(payload.getAmount());
-
         WalletHoldEntity hold = WalletHoldEntity.builder()
                 .wallet(wallet)
                 .amount(payload.getAmount())
                 .status(HoldStatus.ACTIVE)
                 .holdReference("HOLD-" + UUID.randomUUID())
                 .build();
-
-        walletHoldRepository.save(hold);
-
-
-//        kafkaProducer.publishEvent("hold-request-verification-events",hold);
+        hold = walletHoldRepository.save(hold);
+        PaymentResponseDto paymentRequest = PaymentResponseDto
+                .builder()
+                .transactionId(payload.getId())
+                .holdId(hold.getId())
+                .build();
+        kafkaProducer.publishEvent(hold.getId(), paymentRequest, KafkaTopics.WalletHoldEvents);
         System.out.println(wallet.toString());
         return CustomResponse.builder()
                 .isSuccess(true)
@@ -106,10 +110,9 @@ public class WalletServiceImpl implements WalletService {
                 .build();
     }
 
-    @Transactional
     @Override
     public CustomResponse captureHold(PaymentResponseDto payload) {
-
+        System.out.println("Capture Hold : " + payload.getHoldId());
         WalletHoldEntity hold = walletHoldRepository
                 .findById(payload.getHoldId())
                 .orElseThrow(() -> new RuntimeException("Hold not found"));
@@ -128,7 +131,9 @@ public class WalletServiceImpl implements WalletService {
         receiverWallet.credit(hold.getAmount());
         senderWallet.debit(hold.getAmount());
         hold.capture();
+        transaction.setStatus(TransactionStatus.SUCCESS);
 
+        transaction = transactionRepository.save(transaction);
         walletRepository.save(senderWallet);
         walletHoldRepository.save(hold);
 
@@ -140,7 +145,6 @@ public class WalletServiceImpl implements WalletService {
                 .build();
     }
 
-    @Transactional
     @Override
     public CustomResponse releaseHold(PaymentResponseDto payload) {
 
@@ -150,13 +154,22 @@ public class WalletServiceImpl implements WalletService {
 
         if (hold.getStatus() != HoldStatus.ACTIVE)
             throw new IllegalStateException("Hold not active");
-
+        TransactionEntity transaction = transactionRepository
+                .findById(payload.getTransactionId())
+                .orElseThrow(() -> new RuntimeException("Transaction not found....!"));
         WalletEntity wallet = hold.getWallet();
 
-        // IMPORTANT FIX
         wallet.increaseAvailable(hold.getAmount());
-
+        transaction.setStatus(TransactionStatus.FAILED);
+        // IMPORTANT FIX
         hold.release();
+        walletHoldRepository.save(hold);
+        walletRepository.save(wallet);
+        transactionRepository.save(transaction);
+
+        // Publish to kafka
+//        kafkaProducer.publishEvent(transaction.getId(), transaction, KafkaTopics.TransactionEvents);
+        System.out.println(transaction.toString());
         System.out.println(wallet.toString());
         return CustomResponse.builder()
                 .isSuccess(true)

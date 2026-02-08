@@ -12,5 +12,4 @@ import lombok.NoArgsConstructor;
 public class PaymentResponseDto {
     private String holdId;
     private String transactionId;
-    private Boolean isSuccess;
 }
