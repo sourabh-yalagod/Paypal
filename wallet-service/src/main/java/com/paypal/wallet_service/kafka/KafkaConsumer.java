@@ -1,47 +1,41 @@
 package com.paypal.wallet_service.kafka;
 
+import com.paypal.wallet_service.dto.PaymentResponseDto;
 import com.paypal.wallet_service.entity.TransactionEntity;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import com.paypal.wallet_service.service.WalletService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
-
-@Configuration
+@Component
+@RequiredArgsConstructor
 public class KafkaConsumer {
-    @Bean
-    public ConsumerFactory<String, TransactionEntity> consumerFactory() {
-        JsonDeserializer<TransactionEntity> deserializer = new JsonDeserializer<>(TransactionEntity.class);
-        deserializer.setRemoveTypeHeaders(false);
-        deserializer.setUseTypeMapperForKey(true);
-        deserializer.addTrustedPackages("com.paypal.transaction_service.entity");
 
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "wallet-group");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+    private final WalletService walletService;
+
+    @KafkaListener(
+            topics = "TransactionEvents",
+            containerFactory = "transactionKafkaListenerContainerFactory"
+    )
+    public void consumeTransactionTopic(TransactionEntity transaction) {
+        System.out.println("TransactionEvents : " + transaction);
+        walletService.placeHold(transaction);
     }
 
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, TransactionEntity> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, TransactionEntity> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
-        return factory;
-    }
+    @KafkaListener(
+            topics = "WalletHoldEvents",
+            containerFactory = "walletKafkaListenerContainerFactory"
+    )
 
-    @KafkaListener(topics = "transaction-events", groupId = "notification-group")
-    private void consume(TransactionEntity transaction) {
-        System.out.println("Id : "+transaction.getId());
-        System.out.println("Sender : "+transaction.getSenderId());
-        System.out.println("Receiver : "+transaction.getReceiverId());
+    @Transactional
+    public void consumeWalletTopic(PaymentResponseDto payload) {
+        System.out.println("WalletHoldEvents : " + payload);
+        try {
+            walletService.captureHold(payload);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
+            walletService.releaseHold(payload);
+        }
     }
 }
