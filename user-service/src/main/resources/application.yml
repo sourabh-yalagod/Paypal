@@ -6,3 +6,15 @@ spring:
   devtools:
     restart:
       enabled: true
+  datasource:
+    url: jdbc:postgresql://ep-lucky-sky-ai3oyt5y-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    username: neondb_owner
+    password: npg_UxqOK3HdA1vL
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false

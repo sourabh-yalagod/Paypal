@@ -47,12 +47,9 @@ public class UserAuthServiceImpl implements UserAuth {
 
         user = userRepository.save(user);
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("userId", user.getId());
-
         return CustomResponse.builder()
                 .status(HttpStatus.CREATED.value())
-                .data(data)
+                .data(user)
                 .message("User registered successfully")
                 .isSuccess(true)
                 .build();
