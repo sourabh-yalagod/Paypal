@@ -36,7 +36,6 @@ public class TransactionEntity {
     private BigDecimal amount = BigDecimal.ZERO;
 
     @CreatedDate
-    @Column(updatable = false)
     private LocalDateTime createAt = LocalDateTime.now();
 
     @UpdateTimestamp

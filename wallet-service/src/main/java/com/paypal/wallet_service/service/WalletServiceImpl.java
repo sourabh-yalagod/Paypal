@@ -137,6 +137,8 @@ public class WalletServiceImpl implements WalletService {
         walletRepository.save(senderWallet);
         walletHoldRepository.save(hold);
 
+        kafkaProducer.publishEvent(transaction.getId(), transaction, KafkaTopics.TransactionStatus);
+
         return CustomResponse.builder()
                 .isSuccess(true)
                 .status(200)
@@ -168,7 +170,8 @@ public class WalletServiceImpl implements WalletService {
         transactionRepository.save(transaction);
 
         // Publish to kafka
-//        kafkaProducer.publishEvent(transaction.getId(), transaction, KafkaTopics.TransactionEvents);
+        kafkaProducer.publishEvent(transaction.getId(), transaction, KafkaTopics.TransactionStatus);
+
         System.out.println(transaction.toString());
         System.out.println(wallet.toString());
         return CustomResponse.builder()
